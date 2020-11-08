@@ -147,6 +147,9 @@ export const GooglePlacesAutocomplete = forwardRef((props, ref) => {
       setStateText(address);
     },
     getAddressText: () => stateText,
+    setAddressAndSearch: (address) => {
+      _onChangeText(address);
+    },
     ...inputRef.current,
   }));
 
