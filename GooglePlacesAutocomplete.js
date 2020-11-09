@@ -16,7 +16,6 @@ import {
   Image,
   Keyboard,
   Platform,
-  ScrollView,
   Text,
   TextInput,
   TouchableHighlight,
@@ -149,6 +148,9 @@ export const GooglePlacesAutocomplete = forwardRef((props, ref) => {
     getAddressText: () => stateText,
     setAddressAndSearch: (address) => {
       _onChangeText(address);
+      if (!listViewDisplayed) {
+        setListViewDisplayed(true);
+      }
     },
     ...inputRef.current,
   }));
@@ -472,7 +474,6 @@ export const GooglePlacesAutocomplete = forwardRef((props, ref) => {
         if (request.readyState !== 4) {
           return;
         }
-
         if (request.status === 200) {
           const responseJSON = JSON.parse(request.responseText);
           if (typeof responseJSON.predictions !== 'undefined') {
@@ -592,37 +593,25 @@ export const GooglePlacesAutocomplete = forwardRef((props, ref) => {
     return null;
   };
 
-  const _renderRow = (rowData = {}) => {
+  const _renderRow = (rowData = {}, index) => {
     return (
-      <ScrollView
-        contentContainerStyle={
-          props.isRowScrollable ? { minWidth: '100%' } : { width: '100%' }
-        }
-        scrollEnabled={props.isRowScrollable}
-        keyboardShouldPersistTaps={props.keyboardShouldPersistTaps}
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
+      <TouchableHighlight
+        key={index}
+        style={props.isRowScrollable ? { minWidth: '100%' } : { width: '100%' }}
+        onPress={() => _onPress(rowData)}
+        underlayColor={'#eeeeee'}
       >
-        <TouchableHighlight
-          style={
-            props.isRowScrollable ? { minWidth: '100%' } : { width: '100%' }
-          }
-          onPress={() => _onPress(rowData)}
-          underlayColor={props.listUnderlayColor || '#c8c7cc'}
+        <View
+          style={[
+            props.suppressDefaultStyles ? {} : defaultStyles.row,
+            props.styles.row,
+            rowData.isPredefinedPlace ? props.styles.specialItemRow : {},
+          ]}
         >
-          <View
-            style={[
-              props.suppressDefaultStyles ? {} : defaultStyles.row,
-              props.styles.row,
-              rowData.isPredefinedPlace ? props.styles.specialItemRow : {},
-            ]}
-          >
-            {_renderLoader(rowData)}
-            {_renderRowData(rowData)}
-          </View>
-        </TouchableHighlight>
-      </ScrollView>
+          {_renderLoader(rowData)}
+          {_renderRowData(rowData)}
+        </View>
+      </TouchableHighlight>
     );
   };
 
@@ -726,7 +715,8 @@ export const GooglePlacesAutocomplete = forwardRef((props, ref) => {
           keyExtractor={keyGenerator}
           extraData={[dataSource, props]}
           ItemSeparatorComponent={_renderSeparator}
-          renderItem={({ item }) => _renderRow(item)}
+          renderItem={({ item, index }) => _renderRow(item, index)}
+          keyboardShouldPersistTaps={props.keyboardShouldPersistTaps}
           ListEmptyComponent={
             stateText.length > props.minLength && props.listEmptyComponent
           }
